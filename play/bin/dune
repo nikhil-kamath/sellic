@@ -1,0 +1,4 @@
+(executable
+ (public_name play)
+ (name main)
+ (libraries play))
