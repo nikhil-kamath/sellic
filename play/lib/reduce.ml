@@ -7,7 +7,6 @@ let ( let* ) = Base.Result.( >>= )
 type shape = Shape of int list
 type res = (shape, string) result
 
-
 (* Each of the `check` functions returns either the shape of the reduced expression, or an error *)
 let rec check_matrix (t : mexpression) : res =
   match t with
@@ -58,7 +57,6 @@ and check_binop (t : mexpression) : res =
 
 and check_scale (t : mexpression) : res =
   match t with Scale (_, e) -> check e | _ -> Error "Expected scale"
-
 
 and check (t : mexpression) : res =
   match t with

@@ -1,4 +1,8 @@
 (executable
  (public_name play)
  (name main)
- (libraries play))
+ (preprocess
+  (pps ppx_jane bisect_ppx --conditional))
+ (lint
+  (pps ppx_js_style -annotated-ignores -styler -pretty -dated-deprecation))
+ (libraries play core_unix.sys_unix core_unix.command_unix))

@@ -7,6 +7,8 @@
 (source
  (github username/reponame))
 
+(using menhir 3.0)
+
 (authors "Author Name")
 
 (maintainers "Maintainer Name")
