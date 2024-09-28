@@ -1,1 +1,1 @@
-(let x = (3) in (fun x -> (-x) || true)) 5;;
+(let x = (3) in (fun x -> if (-x) || true then true else 19)) 5;;

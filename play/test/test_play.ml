@@ -5,8 +5,8 @@ open Play.Term
 let _ =
   let open Play.Term in
   let sparsity = Unknown in
-  let e1 = Matrix { shape = [ 3; 4 ]; elements = Base.List.range 0 12 } in
-  let e2 = Matrix { shape = [ 4; 5 ]; elements = Base.List.range 0 20 } in
+  let e1 = Matrix { shape = [ 3; 4 ]; elements = Nested [] } in
+  let e2 = Matrix { shape = [ 4; 5 ]; elements = Nested [] } in
   let e3 = BOp (Mult, e1, e2) in
   assert (infer e1 = Ok (TMatrix { shape = [ 3; 4 ]; sparsity }));
   assert (infer e3 = Ok (TMatrix { shape = [ 3; 5 ]; sparsity }));

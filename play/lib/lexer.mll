@@ -4,6 +4,7 @@ open Parser
 
 exception SyntaxError of string
 
+
 let next_line lexbuf =
   let pos = lexbuf.lex_curr_p in
   lexbuf.lex_curr_p <-
@@ -34,6 +35,7 @@ rule read_token = parse
   | "->" { ARROW }
   | "=" { EQUAL }
   | "+" { PLUS }
+  | "*[" { STARLBRACKET }
   | "*" { TIMES }
   | "-" { MINUS }
   | "!" { EXCLAMATION }
@@ -42,6 +44,9 @@ rule read_token = parse
   | "true" {TRUE}
   | "false" {FALSE}
   | ";;" { DOUBLESEMI }
+  | ";" { SEMI }
+  | "[" { LBRACKET }
+  | "]" { RBRACKET }
   | whitespace { read_token lexbuf }
   | "//" { read_single_line_comment lexbuf (* use our comment rule for rest of line *) }
   | "/*" { read_multi_line_comment lexbuf }

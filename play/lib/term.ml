@@ -2,6 +2,7 @@
 open Base
 open Base.List
 open Base.Result
+open Matrix
 
 let ( = ) = Poly.( = )
 
@@ -19,7 +20,7 @@ type op1 = Inverse | Transpose | Not | Negate [@@deriving show]
 type op2 = Mult | Add | And | Or [@@deriving show]
 
 type term =
-  | Matrix of { shape : int list; elements : int list }
+  | Matrix of { shape : int list; elements : nested }
   | Bool of bool
   | Scalar of int
   | If of term * term * term

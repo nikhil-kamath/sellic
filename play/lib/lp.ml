@@ -1,6 +1,8 @@
 open Core
 open Lexer
 open Lexing
+open Parser
+
 
 (* Prints the line number and character number where the error occurred.*)
 let print_error_position lexbuf =
@@ -14,6 +16,8 @@ let parse_program lexbuf =
   | SyntaxError msg ->
       let error_msg = sprintf "%s: %s@." (print_error_position lexbuf) msg in
       Error (Error.of_string error_msg)
+  | Matrix.ShapeError msg ->
+      Error (Error.of_string msg)
   | Parser.Error ->
       let error_msg =
         sprintf "%s: syntax error@." (print_error_position lexbuf)
