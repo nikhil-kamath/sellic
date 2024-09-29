@@ -37,6 +37,18 @@
 %token RBRACKET
 %token SEMI
 %token STARLBRACKET
+%token COLON
+%token M
+%token LANGLE
+%token RANGLE
+%token SPARSE
+%token UNKNOWN
+%token DENSE
+%token COMMA
+%token TBOOL
+%token TSCALAR
+
+
 
 %left PLUS MINUS
 %left TIMES
@@ -47,6 +59,8 @@
 %type <program> program
 %type <nested> matrix
 %type <nested> irregular_matrix
+%type <typ> typ
+%type <sparsity> sparsity
 
 %start program
 
@@ -67,7 +81,7 @@ term:
 | FALSE {Bool(false)}
 | var=ID {Var(var)}
 | LET; var=ID; EQUAL; bound_term=term; IN; t=term {Let(var, bound_term, t)}
-| FUN; var=ID; ARROW; t=term {Abs(var, TUnknown, t)}
+| FUN; var=ID; COLON; ty=typ; ARROW; t=term {Abs(var, ty, t)}
 | op=unop; t=term {UOp (op, t)}
 | t1=term; op=binop; t2=term {BOp(op, t1, t2)}
 | IF; p=term; THEN; t=term; ELSE; f=term {If(p, t, f)}
@@ -80,6 +94,9 @@ term:
 matrix :
 | LBRACKET; l=matrix_tail { Nested l }
 
+irregular_matrix :
+| STARLBRACKET; l=matrix_tail { Nested l }
+
 matrix_tail :
 | RBRACKET { [] }
 | i=INT; RBRACKET { [Item i] }
@@ -87,8 +104,21 @@ matrix_tail :
 | h=matrix; RBRACKET { [h] }
 | h=matrix; SEMI; tail=matrix_tail { h :: tail }
 
-irregular_matrix :
-| STARLBRACKET; l=matrix_tail { Nested l }
+typ :
+| TSCALAR { TScalar }
+| TBOOL { TBool }
+| M; LANGLE; d=matrix_dims; COMMA; s=sparsity; RANGLE { TMatrix {shape=d; sparsity=s} }
+
+matrix_dims:
+| i=INT; TIMES; d=matrix_dims { i::d }
+| i=INT { [i] }
+| { [] }
+
+sparsity:
+| SPARSE { Sparse }
+| UNKNOWN { Unknown }
+| DENSE { Dense }
+
 
 
 

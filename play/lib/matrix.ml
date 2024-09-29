@@ -2,7 +2,23 @@
 (*
   for now, we expect all matrices to be "tensors", that is, not rough:
   each dimension should be nested to an equal depth, with
-  an equal number of elements at each depth
+  an equal number of elements at each depth.
+
+  For example,
+
+  [
+    [1; 0; 0];
+    [0; 1; 0];
+    [0; 0; 1]
+  ]
+
+  is a valid matrix. For "irregular" matrices, we use the `*[` syntax:
+
+  *[
+    [[]; 1; 0; 0];
+    [0; 1; [0]];
+    [0; 0; 1; 3]
+  ]
 *)
 
 open Core

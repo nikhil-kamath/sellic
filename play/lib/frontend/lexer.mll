@@ -23,9 +23,15 @@ let whitespace = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
 
 rule read_token = parse
-  | int { INT (int_of_string (Lexing.lexeme lexbuf))}
   | "(" { LPAREN }
   | ")" { RPAREN }
+
+  (* primitives *)
+  | int { INT (int_of_string (Lexing.lexeme lexbuf))}
+  | "true" {TRUE}
+  | "false" {FALSE}
+
+  (* control flow and basic  expressions *)
   | "let" { LET }
   | "in" { IN }
   | "if" { IF }
@@ -33,20 +39,38 @@ rule read_token = parse
   | "else" { ELSE }
   | "fun" { FUN }
   | "->" { ARROW }
+  | ";;" { DOUBLESEMI }
+
+  (* operators *)
   | "=" { EQUAL }
   | "+" { PLUS }
-  | "*[" { STARLBRACKET }
   | "*" { TIMES }
   | "-" { MINUS }
   | "!" { EXCLAMATION }
   | "&&" { AND }
   | "||" { OR }
-  | "true" {TRUE}
-  | "false" {FALSE}
-  | ";;" { DOUBLESEMI }
-  | ";" { SEMI }
+
+  (* matrix definitions *)
+  | "*[" { STARLBRACKET }
   | "[" { LBRACKET }
   | "]" { RBRACKET }
+  | ";" { SEMI }
+
+  (* types *)
+  | "M" { M }
+  | ":" { COLON }
+  | "<" { LANGLE }
+  | ">" { RANGLE }
+  | "," { COMMA }
+  | "sparse" { SPARSE }
+  | "unknown" { UNKNOWN }
+  | "dense" { DENSE }
+
+  | "bool" { TBOOL }
+  | "scalar" { TSCALAR }
+
+
+  (* misc *)
   | whitespace { read_token lexbuf }
   | "//" { read_single_line_comment lexbuf (* use our comment rule for rest of line *) }
   | "/*" { read_multi_line_comment lexbuf }

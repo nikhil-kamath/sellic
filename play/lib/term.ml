@@ -1,7 +1,5 @@
 (*** FULL LANGUAGE *)
 open Base
-open Base.List
-open Base.Result
 open Matrix
 
 let ( = ) = Poly.( = )
@@ -13,7 +11,8 @@ type typ =
   | TBool
   | TMatrix of { shape : int list; sparsity : sparsity }
   | TFun of typ * typ
-  | TUnknown
+  | TPoly
+  | TNoType
 [@@deriving show]
 
 type op1 = Inverse | Transpose | Not | Negate [@@deriving show]
@@ -33,6 +32,19 @@ type term =
 [@@deriving show]
 
 type program = Program of term list [@@deriving show]
+type typed_program = TypedProgram of (term * (typ, string) Core.Result.t) list
+
+let show_typed_program (TypedProgram tp) =
+  String.concat ~sep:"\n\n========\n\n"
+    (List.map tp ~f:(fun (t, ty) ->
+         show_term t ^ "\n"
+         ^
+         match ty with
+         | Error s -> ">> " ^ s
+         | Ok ty ->
+             ">> "
+             ^ String.substr_replace_all ~pattern:"\n" ~with_:"\n>> "
+                 (show_typ ty)))
 
 (** Substitution *)
 let rec subst (x : string) (s : term) (t : term) : term =
@@ -59,6 +71,7 @@ let ( let* ) = Base.Result.( >>= )
 type context = (string, typ list, String.comparator_witness) Map.t
 
 let rec infer_context (c : context) (t : term) : (typ, string) Result.t =
+  let open List in
   match t with
   | Matrix { shape; _ } -> Ok (TMatrix { shape; sparsity = Unknown })
   | Bool _ -> Ok TBool
@@ -94,13 +107,14 @@ and infer_context_unop (c : context) (op : op1) (t : term) :
   match (op, ty) with
   | Inverse, TMatrix _ -> Ok ty (* inverse preserves the same type *)
   | Transpose, TMatrix { shape; sparsity } ->
-      Ok (TMatrix { shape = rev shape; sparsity })
+      Ok (TMatrix { shape = List.rev shape; sparsity })
   | Not, TBool -> Ok TBool
   | Negate, TScalar -> Ok TScalar
   | _ -> Error "Unary operator type mismatch"
 
 and infer_context_binop (c : context) (op : op2) (t1 : term) (t2 : term) :
     (typ, string) Result.t =
+  let open List in
   let* ty1 = infer_context c t1 in
   let* ty2 = infer_context c t2 in
   match (op, ty1, ty2) with
@@ -125,3 +139,6 @@ and infer_context_binop (c : context) (op : op2) (t1 : term) (t2 : term) :
   | _ -> Error "Binary operator type mismatch"
 
 let infer = infer_context (Map.empty (module String))
+
+let infer_program (Program p) =
+  TypedProgram (List.zip_exn p (List.map ~f:infer p))

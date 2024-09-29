@@ -4,7 +4,6 @@
   (pps ppx_deriving.show))
  (name play))
 
-(ocamllex lexer)
 
-(menhir
- (modules parser))
+(include_subdirs unqualified)
+

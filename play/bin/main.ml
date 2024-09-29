@@ -34,13 +34,17 @@ let command =
   Command.basic ~summary:"Run sellic programs"
     ~readme:(fun () -> "A list of execution options")
     Command.Let_syntax.(
-      let%map_open filename = anon ("filename" %: sellic_file) in
+      let%map_open filename = anon ("filename" %: sellic_file)
+      and show_typed_ast =
+        flag "-show-typed-ast" no_arg
+          ~doc:" Pretty print the typed AST of the program"
+      in
       fun () ->
         In_channel.with_file filename ~f:(fun file_ic ->
             let lexbuf =
               Lexing.from_channel file_ic
               (*Create a lex buffer from the file to read in tokens *)
             in
-            print_endline (Lp.show_parsed_file lexbuf)))
+            Lp.display_compile ~show_typed_ast lexbuf))
 
 let () = Command_unix.run ~version:"1.0" ~build_info:"RWO" command
