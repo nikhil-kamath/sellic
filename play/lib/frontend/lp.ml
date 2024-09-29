@@ -32,5 +32,5 @@ let display_compile ?(show_typed_ast = false) lexbuf =
   | Error e -> print_endline (Error.to_string_mach e)
   | Ok p ->
       if show_typed_ast then
-        print_endline (Term.show_typed_program (Term.infer_program p))
+        print_endline (Term.show_typed_program (Types.infer_program p))
       else print_endline (Term.show_program p)

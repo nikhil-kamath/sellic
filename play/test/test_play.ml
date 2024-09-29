@@ -4,6 +4,7 @@ open Play.Term
 
 let _ =
   let open Play.Term in
+  let open Play.Types in
   let sparsity = Unknown in
   let e1 = Matrix { shape = [ 3; 4 ]; elements = Nested [] } in
   let e2 = Matrix { shape = [ 4; 5 ]; elements = Nested [] } in

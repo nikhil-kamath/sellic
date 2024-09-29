@@ -49,6 +49,8 @@ rule read_token = parse
   | "!" { EXCLAMATION }
   | "&&" { AND }
   | "||" { OR }
+  | "<=" { LE }
+  | ">=" { GE }
 
   (* matrix definitions *)
   | "*[" { STARLBRACKET }

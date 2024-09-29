@@ -47,6 +47,8 @@
 %token COMMA
 %token TBOOL
 %token TSCALAR
+%token LE
+%token GE
 
 
 
@@ -130,6 +132,12 @@ sparsity:
 %inline binop:
 | PLUS { Add }
 | TIMES { Mult }
+| MINUS { Sub }
+| EQUAL { Eq }
+| GE { Gte }
+| LE { Lte }
+| LANGLE { Lt }
+| RANGLE { Gt }
 | AND { And }
 | OR { Or }
 
