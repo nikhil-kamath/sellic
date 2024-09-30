@@ -52,6 +52,11 @@ rule read_token = parse
   | "<=" { LE }
   | ">=" { GE }
 
+  (* special operators *)
+  | "'" { SQUOTE }
+  | "/" { FSLASH }
+  | "\\" { BSLASH }
+
   (* matrix definitions *)
   | "*[" { STARLBRACKET }
   | "[" { LBRACKET }

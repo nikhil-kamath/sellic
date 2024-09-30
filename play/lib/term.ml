@@ -21,12 +21,17 @@ type op2 = Mult | Add | Sub | And | Or | Lt | Gt | Lte | Gte | Eq
 [@@deriving show]
 
 type term =
-  | Matrix of { shape : int list; elements : nested }
+  | Matrix of { shape : int list; elements : nested } (* primitive matrices *)
   | Bool of bool
   | Scalar of int
-  | If of term * term * term
   | Var of string
-  | App of term * term
+  | App of term * term (* basic function application *)
+  | Fold of
+      term
+      * term
+      * term (* matrix-"polymorphic" fold [(acc -> a -> acc), acc, [a]) *)
+  | Map of term * term (* matrix-"polymorphic" map [(a -> b), [a]]*)
+  | If of term * term * term
   | Abs of string * typ * term
   | UOp of op1 * term
   | BOp of op2 * term * term

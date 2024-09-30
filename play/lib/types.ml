@@ -38,6 +38,53 @@ let rec infer_context (c : context) (t : term) : (typ, string) Result.t =
   | Let (x, e1, e2) ->
       let* t1 = infer_context c e1 in
       infer_context (Map.add_multi c ~key:x ~data:t1) e2
+  | Fold (f, init, xs) -> (
+      let* f = infer_context c f in
+      let* init = infer_context c init in
+      let* xs = infer_context c xs in
+      match (f, xs) with
+      (* lowest-level reduction (1-dim matrix) *)
+      | TFun (acc, TFun (TScalar, res)), TMatrix { shape; _ }
+        when acc = res && acc = init && length shape = 1 ->
+          Ok res
+      (* higher-level reduction (n-dim matrix) *)
+      | ( TFun (acc, TFun (TMatrix { shape = ishape; _ }, res)),
+          TMatrix { shape; _ } )
+        when acc = res && acc = init && ishape = drop shape 1 ->
+          Ok res
+      | _, TMatrix _ -> Error "Invalid folding function"
+      | _ -> Error "Trying to fold over a non-matrix")
+  | Map (f, xs) -> (
+      let* f = infer_context c f in
+      let* xs = infer_context c xs in
+      match (f, xs) with
+      | TFun (TScalar, TScalar), TMatrix { shape; _ } ->
+          Ok xs (* simplest map on a matrix, maintains shape *)
+      | TFun (TScalar, TMatrix { shape = oshape; _ }), TMatrix { shape; _ } ->
+          (* mapping scalar -> matrix appends the function output shape to the matrix shape *)
+          Ok (TMatrix { shape = List.append oshape shape; sparsity = Unknown })
+      | TFun (TMatrix { shape = ishape; _ }, TScalar), TMatrix { shape; _ }
+      (* mapping a suffix of the shape to a scalar *)
+        when List.is_suffix shape ~suffix:ishape ~equal:( = ) ->
+          Ok
+            (TMatrix
+               {
+                 shape = take shape (length shape - length ishape);
+                 sparsity = Unknown;
+               })
+          (* mapping a suffix of the shape to a different shape *)
+      | ( TFun (TMatrix { shape = ishape; _ }, TMatrix { shape = oshape; _ }),
+          TMatrix { shape; _ } )
+        when List.is_suffix shape ~suffix:ishape ~equal:( = ) ->
+          Ok
+            (TMatrix
+               {
+                 shape =
+                   append (take shape (length shape - length ishape)) oshape;
+                 sparsity = Unknown;
+               })
+      | _, TMatrix _ -> Error "Invalid folding function"
+      | _ -> Error "Trying to map over a non-matrix")
 
 and infer_context_unop (c : context) (op : op1) (t : term) :
     (typ, string) Result.t =
