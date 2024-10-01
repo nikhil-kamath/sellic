@@ -38,7 +38,10 @@ type term =
   | Let of string * term * term
 [@@deriving show]
 
-type program = Program of term list [@@deriving show]
+(* toplevel mappings of name -> term *)
+type toplevel_def = Def of string * term [@@deriving show]
+type toplevel = Toplevel of toplevel_def list [@@deriving show]
+type program = Program of toplevel * term list [@@deriving show]
 type typed_program = TypedProgram of (term * (typ, string) Core.Result.t) list
 
 let show_typed_program (TypedProgram tp) =

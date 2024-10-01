@@ -131,5 +131,23 @@ and infer_context_binop (c : context) (op : op2) (t1 : term) (t2 : term) :
 
 let infer = infer_context (Map.empty (module String))
 
-let infer_program (Program p) =
-  TypedProgram (List.zip_exn p (List.map ~f:infer p))
+let infer_program (Program (Toplevel top, p)) =
+  let context = Map.empty (module String) in
+  (* type the toplevel mappings in order, expanding the original context *)
+  let context, toplevel_mappings =
+    List.fold_left top ~init:(context, [])
+      ~f:(fun (context, defs) (Def (x, t)) ->
+        let result_ty = infer_context context t in
+        let context =
+          match result_ty with
+          | Ok ty -> Map.add_multi context ~key:x ~data:ty
+          (* if a top-level definition does not type check, can't add to context *)
+          | _ -> context
+        in
+        (context, (t, result_ty) :: defs))
+  in
+
+  TypedProgram
+    (List.append
+       (List.rev toplevel_mappings)
+       (List.zip_exn p (List.map ~f:(infer_context context) p)))

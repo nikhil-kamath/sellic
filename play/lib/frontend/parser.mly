@@ -4,6 +4,14 @@
     open Core
     open Core.Option
 
+    type eterm = T of term | D of string * term
+
+    let rec eterms_to_program es =
+    match es with
+    | [] -> Program (Toplevel [], [])
+    | T(t)::es -> let Program(tl, ts) = eterms_to_program es in Program(tl, t::ts)
+    | D(x, t)::es -> let Program(Toplevel ds, ts) = eterms_to_program es in Program(Toplevel (Def (x, t)::ds), ts)
+
 
     let shape_error (pos, _) =
         let open Lexing in
@@ -66,11 +74,12 @@
 %left PLUS MINUS
 %left TIMES
 %left EQUAL
-%nonassoc TRUE FALSE INT ID LBRACKET LPAREN STARLBRACKET
+%nonassoc TRUE FALSE INT LBRACKET LPAREN STARLBRACKET
+%left ID
 
 %type <term> term
-%type <term> eterm
-%type <term list> list(eterm)
+%type <eterm> eterm
+%type <eterm list> list(eterm)
 %type <op1> unop
 %type <op2> binop
 %type <program> program
@@ -86,19 +95,21 @@
 %%
 
 program:
-| terms=list(eterm); EOF {Program (terms)}
+| eterms=list(eterm); EOF { eterms_to_program eterms }
 
 eterm:
-| t=term; DOUBLESEMI { t }
+| LET; var=ID; EQUAL; x=term; DOUBLESEMI; { D(var, x) }
+| t=term; DOUBLESEMI { T(t) }
 
 term:
 | LPAREN; t=term; RPAREN {t}
+| t1=term; t2=term %prec ID {App(t1, t2)}
 | i=INT {Scalar(i)}
 | TRUE {Bool(true)}
 | FALSE {Bool(false)}
 | var=ID {Var(var)}
 | LET; var=ID; EQUAL; bound_term=term; IN; t=term {Let(var, bound_term, t)}
-| FUN; defs=nonempty_list(var=ID; COLON; ty=typ { var, ty }); ARROW; body=term { List.fold_right defs ~f:(fun (x, t) a -> Abs (x, t, a)) ~init:body }
+| FUN; defs=nonempty_list(LPAREN; var=ID; COLON; ty=typ; RPAREN { var, ty }); ARROW; body=term { List.fold_right defs ~f:(fun (x, t) a -> Abs (x, t, a)) ~init:body }
 | t1=term; op=binop; t2=term {BOp(op, t1, t2)}
 | op=unop; t=term {UOp (op, t)}
 | IF; p=term; THEN; t=term; ELSE; f=term {If(p, t, f)}
@@ -109,7 +120,6 @@ term:
 | m=irregular_matrix { Matrix { shape = []; elements = m }}
 | t1=term; SQUOTE; t2=term {Map(t1, t2)}
 | t1=term; FSLASH; t2=term; BSLASH; t3=term {Fold(t1, t2, t3)}
-| t1=term; t2=term {App(t1, t2)}
 
 matrix :
 | LBRACKET; l=matrix_tail; { Nested l }
@@ -125,6 +135,8 @@ matrix_tail :
 | h=matrix; SEMI; tail=matrix_tail { h :: tail }
 
 typ :
+| LPAREN; t=typ; RPAREN { t }
+| t1=typ; ARROW; t2=typ { TFun(t1, t2) }
 | TSCALAR { TScalar }
 | TBOOL { TBool }
 | M; LANGLE; d=separated_list(TIMES, INT); s=option(COMMA; s=sparsity {s}); RANGLE { TMatrix {shape=d; sparsity=Option.value s ~default:Unknown} }
