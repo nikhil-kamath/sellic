@@ -28,7 +28,10 @@ exception ShapeError of string
 let ( let* ) = Option.( >>= )
 let ( = ) = Poly.( = )
 
+type dim = Hard of int | DVar of string [@@deriving show]
+type dims = dim list [@@deriving show]
 type nested = Item of int | Nested of nested list [@@deriving show]
+type sparsity = Sparse | Dense | Unknown [@@deriving show]
 
 let is_nested = function Nested _ -> true | _ -> false
 let is_item = function Item _ -> true | _ -> false
@@ -52,10 +55,21 @@ let rec lengths = function
   | Nested ns -> List.concat_map ns ~f:lengths
 
 (* Returns None if the list is misshapen, otherwise Some shape *)
-let rec shape = function
+let rec shape : nested -> dims option = function
   | Item _ -> Some []
-  | Nested [] -> Some [ 0 ]
+  | Nested [] -> Some [ Hard 0 ]
   | Nested ns ->
       let* shapes = List.map ~f:shape ns |> Option.all in
       let* shape = List.all_equal shapes ~equal:( = ) in
-      Some (List.length ns :: shape)
+      Some (Hard (List.length ns) :: shape)
+
+
+(* used for pseudo-dependent typing using existentials for generic matrix dimensions *)
+(* dimension variable -> constraints *)
+type gamma = (string, dim list, String.comparator_witness) Map.t
+
+let all = List.fold ~init:true ~f:(&&)
+
+(* returns whether the two dimensions are "equivalent", and adds any necessary bindings to gamma *)
+let rec compatible (g: gamma) (a: dim) (b: dim) : bool * gamma =
+  true, Map.empty (module String)

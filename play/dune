@@ -1,4 +1,6 @@
 (env
  (dev
   (flags
-   (:standard -w -66-32-33-34-69-27-26-39))))
+   (:standard -w -66-32-33-34-69-27-26-39-11))))
+; -8 is partial-match, remove when not using
+; -11 is reduntant case, remove when not using

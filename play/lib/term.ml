@@ -4,12 +4,10 @@ open Matrix
 
 let ( = ) = Poly.( = )
 
-type sparsity = Sparse | Dense | Unknown [@@deriving show]
-
 type typ =
   | TScalar
   | TBool
-  | TMatrix of { shape : int list; sparsity : sparsity }
+  | TMatrix of { shape : dims; sparsity : sparsity }
   | TFun of typ * typ
   | TPoly
   | TNoType
@@ -21,7 +19,7 @@ type op2 = Mult | Add | Sub | And | Or | Lt | Gt | Lte | Gte | Eq
 [@@deriving show]
 
 type term =
-  | Matrix of { shape : int list; elements : nested } (* primitive matrices *)
+  | Matrix of { shape : dims; elements : nested } (* primitive matrices *)
   | Bool of bool
   | Scalar of int
   | Var of string

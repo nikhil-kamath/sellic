@@ -1,5 +1,5 @@
 (library
- (libraries base core)
+ (libraries base core z3)
  (preprocess
   (pps ppx_deriving.show))
  (name play))

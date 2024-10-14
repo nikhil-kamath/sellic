@@ -1,0 +1,43 @@
+def start_program(n_students):
+    entree = input("Enter an entree:")
+
+    ratings = []
+    for _ in range(n_students):
+        rating = review()
+        if rating != None:
+            ratings.append(rating)
+
+    code = input("Staff, enter code:")
+    if code == "302":
+        print_process(entree, ratings)
+
+
+def print_process(entree, ratings):
+    print(f"Entree name: {entree}")
+    print(f"Number of valid entree ratings: {len(ratings)}")
+    print(f"Minimum rating: {min(ratings)}")
+    print(f"Maximum rating: {max(ratings)}")
+    print(f"Range of ratings: {max(ratings) - min(ratings)}")
+    print(f"Average rating: {sum(ratings) / len(ratings)}")
+
+def review():
+    tries = 1
+    stars = int(input("Enter in a rating: "))
+
+    while tries < 3 and not validate_stars(stars):
+        stars = int(input("Invalid input, try again:"))
+        tries += 1
+
+    if validate_stars(stars):
+        return stars
+    else:
+        print("Error, contact a staff person for help")
+        return None
+
+
+
+def validate_stars(stars):
+    return stars in range(0, 6)
+
+
+start_program(5)

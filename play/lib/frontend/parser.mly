@@ -139,7 +139,7 @@ typ :
 | t1=typ; ARROW; t2=typ { TFun(t1, t2) }
 | TSCALAR { TScalar }
 | TBOOL { TBool }
-| M; LANGLE; d=separated_list(TIMES, INT); s=option(COMMA; s=sparsity {s}); RANGLE { TMatrix {shape=d; sparsity=Option.value s ~default:Unknown} }
+| M; LANGLE; d=separated_list(TIMES, i=INT {Hard i} | x=ID {DVar x}); s=option(COMMA; s=sparsity {s}); RANGLE { TMatrix {shape=d; sparsity=Option.value s ~default:Unknown} }
 
 sparsity:
 | SPARSE { Sparse }
