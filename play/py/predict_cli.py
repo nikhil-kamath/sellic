@@ -41,7 +41,7 @@ class Prediction:
 
     def predict_rlv(self, sparsityA, sparsityB, rlvA):
         inp = self.make_input(sparsityA, sparsityB, rlvA)
-        return np.clip(self.gb_rlv.predict(inp)[0], 0, 1)
+        return max(self.gb_rlv.predict(inp)[0], 0)
 
 
 def main():

@@ -1,5 +1,5 @@
 (library
- (libraries base core z3)
+ (libraries base core z3 owl)
  (preprocess
   (pps ppx_deriving.show))
  (name play))

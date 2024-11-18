@@ -1,10 +1,13 @@
 %{
     open Term
     open Matrix
+    open Sparsity
     open Solver
     open Core
     open Core.Option
 
+    (* definitions are disabled in this branch *)
+    (*
     type eterm = T of term | D of string * term
 
     let rec eterms_to_program es =
@@ -12,7 +15,7 @@
     | [] -> Program (Toplevel [], [])
     | T(t)::es -> let Program(tl, ts) = eterms_to_program es in Program(tl, t::ts)
     | D(x, t)::es -> let Program(Toplevel ds, ts) = eterms_to_program es in Program(Toplevel (Def (x, t)::ds), ts)
-
+    *)
 
     let shape_error (pos, _) =
         let open Lexing in
@@ -80,8 +83,9 @@
 %left ID
 
 %type <term> term
-%type <eterm> eterm
-%type <eterm list> list(eterm)
+%type <term> ended_term
+// %type <eterm> eterm
+// %type <eterm list> list(eterm)
 %type <op1> unop
 %type <op2> binop
 %type <program> program
@@ -89,7 +93,6 @@
 %type <nested> irregular_matrix
 %type <nested list> matrix_tail
 %type <typ> typ
-%type <sparsity> sparsity
 %type <size_expr> size_expr
 
 %start program
@@ -98,11 +101,15 @@
 %%
 
 program:
-| eterms=list(eterm); EOF { eterms_to_program eterms }
+// | eterms=list(eterm); EOF { eterms_to_program eterms }
+| terms=list(ended_term); EOF { terms }
 
-eterm:
-| LET; var=ID; EQUAL; x=term; DOUBLESEMI; { D(var, x) }
-| t=term; DOUBLESEMI { T(t) }
+// eterm:
+// | LET; var=ID; EQUAL; x=term; DOUBLESEMI; { D(var, x) }
+// | t=term; DOUBLESEMI { T(t) }
+
+ended_term:
+| t=term; DOUBLESEMI {t}
 
 term:
 | LPAREN; t=term; RPAREN {t}
@@ -122,8 +129,6 @@ term:
     | Some s -> Matrix {shape = s; elements = m}
 }
 | m=irregular_matrix { Matrix { shape = []; elements = m }}
-| t1=term; SQUOTE; t2=term {Map(t1, t2)}
-| t1=term; FSLASH; t2=term; BSLASH; t3=term {Fold(t1, t2, t3)}
 
 matrix :
 | LBRACKET; l=matrix_tail; { Nested l }
@@ -145,18 +150,13 @@ typ :
 | t1=typ; ARROW; t2=typ { TFun(t1, t2) }
 | TSCALAR { TScalar }
 | TBOOL { TBool }
-| M?; LANGLE; d=separated_list(TIMES, size_expr); s=option(COMMA; s=sparsity {s}); RANGLE { TMatrix {shape=d; sparsity=Option.value s ~default:Unknown} }
+| M?; LANGLE; d=separated_list(TIMES, size_expr); RANGLE { TMatrix {shape=d; sparsity={s=0.;rlv=0.}} }
 
 size_expr :
 | i=INT {CNum i}
 | x=ID {CVar x}
 | s1=size_expr; PLUS; s2=size_expr {CAdd (s1, s2)}
 | s1=size_expr; MINUS; s2=size_expr {CSub (s1, s2)}
-
-sparsity:
-| SPARSE { Sparse }
-| UNKNOWN { Unknown }
-| DENSE { Dense }
 
 %inline unop:
 | MINUS { Negate }

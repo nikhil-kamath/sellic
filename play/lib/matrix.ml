@@ -31,7 +31,6 @@ let ( = ) = Poly.( = )
 
 type dims = size_expr list [@@deriving show]
 type nested = Item of float | Nested of nested list [@@deriving show]
-type sparsity = Sparse | Dense | Unknown [@@deriving show]
 
 let is_nested = function Nested _ -> true | _ -> false
 let is_item = function Item _ -> true | _ -> false
@@ -63,3 +62,28 @@ let rec shape : nested -> dims option = function
       let* shape = List.all_equal shapes ~equal:( = ) in
       Some (CNum (List.length ns) :: shape)
 
+(* Returns total number of elements *)
+let rec size : nested -> int = function
+  | Item _ -> 1
+  | Nested xs -> List.fold (List.map ~f:size xs) ~init:0 ~f:( + )
+
+let to_array n =
+  let row =
+    Array.of_list_map ~f:(function
+      | Item x -> x
+      | _ ->
+          print_endline "Warning: zeroing non-2d-matrix";
+          0.)
+  in
+  let to_array =
+    Array.of_list_map ~f:(function
+      | Nested xs -> row xs
+      | _ ->
+          print_endline "Warning: zeroing non-2d-matrix";
+          [||])
+  in
+  match n with
+  | Nested xs -> to_array xs
+  | _ ->
+      print_endline "Warning: zeroing non-2d-matrix";
+      [||]

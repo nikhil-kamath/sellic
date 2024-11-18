@@ -74,7 +74,7 @@ let solve (rs : restrictions) =
   in
   let x = Quantifier.mk_exists ctx types ns r (Some 1) [] [] (Some (Symbol.mk_string ctx "hello1")) (Some (Symbol.mk_string ctx "hello")) in
   let solver = (mk_solver ctx None) in
-  (Printf.printf "c4: %s\n" (Expr.to_string r)) ;
+  (* (Printf.printf "c4: %s\n" (Expr.to_string r)) ; *)
   check solver [r] = SATISFIABLE
 
 
