@@ -1,3 +1,4 @@
+open Solver
 (** Preprocessing for parsing matrices *)
 (*
   for now, we expect all matrices to be "tensors", that is, not rough:
@@ -28,9 +29,8 @@ exception ShapeError of string
 let ( let* ) = Option.( >>= )
 let ( = ) = Poly.( = )
 
-type dim = Hard of int | DVar of string [@@deriving show]
-type dims = dim list [@@deriving show]
-type nested = Item of int | Nested of nested list [@@deriving show]
+type dims = size_expr list [@@deriving show]
+type nested = Item of float | Nested of nested list [@@deriving show]
 type sparsity = Sparse | Dense | Unknown [@@deriving show]
 
 let is_nested = function Nested _ -> true | _ -> false
@@ -57,19 +57,9 @@ let rec lengths = function
 (* Returns None if the list is misshapen, otherwise Some shape *)
 let rec shape : nested -> dims option = function
   | Item _ -> Some []
-  | Nested [] -> Some [ Hard 0 ]
+  | Nested [] -> Some [ CNum 0 ]
   | Nested ns ->
       let* shapes = List.map ~f:shape ns |> Option.all in
       let* shape = List.all_equal shapes ~equal:( = ) in
-      Some (Hard (List.length ns) :: shape)
+      Some (CNum (List.length ns) :: shape)
 
-
-(* used for pseudo-dependent typing using existentials for generic matrix dimensions *)
-(* dimension variable -> constraints *)
-type gamma = (string, dim list, String.comparator_witness) Map.t
-
-let all = List.fold ~init:true ~f:(&&)
-
-(* returns whether the two dimensions are "equivalent", and adds any necessary bindings to gamma *)
-let rec compatible (g: gamma) (a: dim) (b: dim) : bool * gamma =
-  true, Map.empty (module String)

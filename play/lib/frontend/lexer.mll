@@ -18,6 +18,7 @@ let digit = ['0'-'9']
 let alpha = ['a'-'z' 'A'-'Z']
 
 let int = '-'? digit+  (* regex for integers *)
+let float = '-'?((digit*'.'?digit+ )|( digit+'.'?digit* )|( digit+)) (* regex for floats *)
 let id = (alpha) (alpha|digit|'_')* (* regex for identifier *)
 let whitespace = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
@@ -28,6 +29,7 @@ rule read_token = parse
 
   (* primitives *)
   | int { INT (int_of_string (Lexing.lexeme lexbuf))}
+  | float { FLOAT (float_of_string (Lexing.lexeme lexbuf))}
   | "true" {TRUE}
   | "false" {FALSE}
 

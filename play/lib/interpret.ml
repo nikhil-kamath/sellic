@@ -1,3 +1,5 @@
+(** UNUSED *)
+
 (* bootleg interpreter *)
 open Core
 open Term

@@ -1,90 +1,56 @@
-(*
-   Copyright (C) 2012 Microsoft Corporation
-   Author: CM Wintersteiger (cwinter) 2012-12-17
-*)
+open Core
+open Play
 
-open Z3
-open Z3.Symbol
-open Z3.Sort
-open Z3.Expr
-open Z3.Boolean
-open Z3.FuncDecl
-open Z3.Goal
-open Z3.Tactic
-open Z3.Tactic.ApplyResult
-open Z3.Probe
-open Z3.Solver
-open Z3.Arithmetic
-open Z3.Arithmetic.Integer
-open Z3.Arithmetic.Real
-open Z3.BitVector
+let ( = ) = Poly.( = )
 
-exception TestFailedException of string
+let get_file_extension filename =
+  String.split_on_chars filename ~on:[ '.' ]
+  |> List.last |> Option.value ~default:""
 
-(**
-   A basic example of how to use quantifiers.
-**)
-let  quantifier_example1 ( ctx : context ) =
-  Printf.printf "QuantifierExample\n" ;
-  let is = (Integer.mk_sort ctx) in
-  let types = [ is; is; is ] in
-  let names = [ (Symbol.mk_string ctx "x_0");
-		(Symbol.mk_string ctx "x_1");
-		(Symbol.mk_string ctx "x_2") ] in
-  let vars = [ (Quantifier.mk_bound ctx 2 (List.nth types 0));
-	       (Quantifier.mk_bound ctx 2 (List.nth types 1));
-	       (Quantifier.mk_bound ctx 2 (List.nth types 2)) ] in
-  let xs = [ (Integer.mk_const ctx (List.nth names 0));
-	     (Integer.mk_const ctx (List.nth names 1));
-	     (Integer.mk_const ctx (List.nth names 2)) ] in
+let rec remove_last_elem_list = function
+  | [] -> []
+  | [ _ ] -> []
+  | x :: xs -> x :: remove_last_elem_list xs
 
-  let body_vars = (Boolean.mk_and ctx
-		     [ (mk_eq ctx
-			  (Arithmetic.mk_add ctx [ (List.nth vars 0) ; (Integer.mk_numeral_i ctx 1)])
-			  (Integer.mk_numeral_i ctx 2)) ;
-		       (mk_eq ctx
-			  (Arithmetic.mk_add ctx [ (List.nth vars 1); (Integer.mk_numeral_i ctx 2)])
-			  (Arithmetic.mk_add ctx [ (List.nth vars 2); (Integer.mk_numeral_i ctx 3)])) ]) in
-  let body_const = (Boolean.mk_and ctx
-		      [ (mk_eq ctx
-			   (Arithmetic.mk_add ctx [ (List.nth xs 0); (Integer.mk_numeral_i ctx 1)])
-			   (Integer.mk_numeral_i ctx 2)) ;
-			(mk_eq ctx
-			   (Arithmetic.mk_add ctx [ (List.nth xs 1); (Integer.mk_numeral_i ctx 2)])
-			   (Arithmetic.mk_add ctx [ (List.nth xs 2); (Integer.mk_numeral_i ctx 3)])) ]) in
+let get_output_file filename =
+  String.split_on_chars filename ~on:[ '.' ] |> fun split_filename ->
+  remove_last_elem_list split_filename |> fun filename_without_ending ->
+  String.concat ~sep:"." (filename_without_ending @ [ "ir" ])
 
-  let x = (Quantifier.mk_forall ctx types names body_vars (Some 1) [] [] (Some (Symbol.mk_string ctx "Q1")) (Some (Symbol.mk_string ctx "skid1"))) in
-  Printf.printf "Quantifier X: %s\n" (Quantifier.to_string x) ;
-  let y = (Quantifier.mk_forall_const ctx xs body_const (Some 1) [] [] (Some (Symbol.mk_string ctx "Q2")) (Some (Symbol.mk_string ctx "skid2"))) in
-  Printf.printf "Quantifier Y: %s\n" (Quantifier.to_string y) ;
-  print_endline ("nikhil: " ^ (string_of_bool (is_true (Quantifier.expr_of_quantifier x))));
-  if (is_true (Quantifier.expr_of_quantifier x)) then
-    raise (TestFailedException "JLKFAJKFJELK") (* unreachable *)
-  else if (is_false (Quantifier.expr_of_quantifier x)) then
-    raise (TestFailedException "") (* unreachable *)
-  else if (is_const (Quantifier.expr_of_quantifier x)) then
-    raise (TestFailedException "") (* unreachable *)
-
-
-
-let _ =
-  try (
-    if not (Log.open_ "z3.log") then
-      raise (TestFailedException "Log couldn't be opened.")
-    else
-      (
-	Printf.printf "Running Z3 version %s\n" Version.to_string ;
-	Printf.printf "Z3 full version string: %s\n" Version.full_version ;
-	let cfg = [("model", "true"); ("proof", "false")] in
-	let ctx = (mk_context cfg) in
-	quantifier_example1 ctx ;
-	Printf.printf "Disposing...\n";
-	Gc.full_major ()
-      );
-    Printf.printf "Exiting.\n" ;
-    exit 0
-  ) with Error(msg) -> (
-    Printf.printf "Z3 EXCEPTION: %s\n" msg ;
+let sellic_file =
+  let error_not_file filename =
+    eprintf "'%s' is not a sellic file. Hint: use the .sl extension\n%!"
+      filename;
     exit 1
-  )
-;;
+  in
+  Command.Spec.Arg_type.create (fun filename ->
+      match Sys_unix.is_file filename with
+      | `Yes ->
+          if get_file_extension filename = "sl" then filename
+          else error_not_file filename
+      | `No | `Unknown -> error_not_file filename)
+
+let get_arg x =
+  match String.lowercase x with
+  | "terms" -> `Terms
+  | "types" -> `Types
+  | "inlined" -> `Inlined
+  | "inlinedtypes" -> `InlinedTypes
+  | _ -> `Terms
+
+let command =
+  Command.basic ~summary:"Run sellic programs"
+    ~readme:(fun () -> "A list of execution options")
+    Command.Let_syntax.(
+      let%map_open filename = anon ("filename" %: sellic_file)
+      and show =
+        flag "-show" (listed string)
+          ~doc:" Pretty print the [terms | types | inlined]* of a program."
+      in
+      let whats = List.map ~f:get_arg show in
+      fun () ->
+        In_channel.with_file filename ~f:(fun file_ic ->
+            let lexbuf = Lexing.from_channel file_ic in
+            Lp.display_compile ~whats lexbuf))
+
+let () = Command_unix.run ~version:"1.0" ~build_info:"RWO" command

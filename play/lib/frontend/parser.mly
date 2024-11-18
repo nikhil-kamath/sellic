@@ -1,6 +1,7 @@
 %{
     open Term
     open Matrix
+    open Solver
     open Core
     open Core.Option
 
@@ -21,6 +22,7 @@
 %}
 
 %token <int> INT
+%token <float> FLOAT
 %token <string> ID
 %token LPAREN
 %token RPAREN
@@ -74,7 +76,7 @@
 %left PLUS MINUS
 %left TIMES
 %left EQUAL
-%nonassoc TRUE FALSE INT LBRACKET LPAREN STARLBRACKET
+%nonassoc TRUE FALSE INT FLOAT LBRACKET LPAREN STARLBRACKET
 %left ID
 
 %type <term> term
@@ -88,6 +90,7 @@
 %type <nested list> matrix_tail
 %type <typ> typ
 %type <sparsity> sparsity
+%type <size_expr> size_expr
 
 %start program
 
@@ -104,7 +107,8 @@ eterm:
 term:
 | LPAREN; t=term; RPAREN {t}
 | t1=term; t2=term %prec ID {App(t1, t2)}
-| i=INT {Scalar(i)}
+| i=INT {Scalar(float_of_int i)}
+| i=FLOAT {Scalar(i)}
 | TRUE {Bool(true)}
 | FALSE {Bool(false)}
 | var=ID {Var(var)}
@@ -129,8 +133,10 @@ irregular_matrix :
 
 matrix_tail :
 | RBRACKET { [] }
-| i=INT; RBRACKET { [Item i] }
-| i=INT; SEMI; tail=matrix_tail { (Item i) :: tail }
+| i=INT; RBRACKET { [Item (float_of_int i)] }
+| i=FLOAT; RBRACKET { [Item i] }
+| i=INT; SEMI; tail=matrix_tail { (Item (float_of_int i)) :: tail }
+| i=FLOAT; SEMI; tail=matrix_tail { (Item i) :: tail }
 | h=matrix; RBRACKET { [h] }
 | h=matrix; SEMI; tail=matrix_tail { h :: tail }
 
@@ -139,7 +145,13 @@ typ :
 | t1=typ; ARROW; t2=typ { TFun(t1, t2) }
 | TSCALAR { TScalar }
 | TBOOL { TBool }
-| M; LANGLE; d=separated_list(TIMES, i=INT {Hard i} | x=ID {DVar x}); s=option(COMMA; s=sparsity {s}); RANGLE { TMatrix {shape=d; sparsity=Option.value s ~default:Unknown} }
+| M?; LANGLE; d=separated_list(TIMES, size_expr); s=option(COMMA; s=sparsity {s}); RANGLE { TMatrix {shape=d; sparsity=Option.value s ~default:Unknown} }
+
+size_expr :
+| i=INT {CNum i}
+| x=ID {CVar x}
+| s1=size_expr; PLUS; s2=size_expr {CAdd (s1, s2)}
+| s1=size_expr; MINUS; s2=size_expr {CSub (s1, s2)}
 
 sparsity:
 | SPARSE { Sparse }

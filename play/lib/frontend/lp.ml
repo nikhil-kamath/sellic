@@ -27,10 +27,15 @@ let show_parsed_file lexbuf =
   | Ok p -> Term.show_program p
   | Error e -> Error.to_string_mach e
 
-let display_compile ?(show_typed_ast = false) lexbuf =
+let display_compile ?(whats : [`Types | `Terms | `Inlined | `InlinedTypes] list = [ `Terms ])
+    lexbuf =
   match parse_program lexbuf with
   | Error e -> print_endline (Error.to_string_mach e)
   | Ok p ->
-      if show_typed_ast then
-        print_endline (Term.show_typed_program (Types.infer_program p))
-      else print_endline (Term.show_program p)
+      let p = Types.infer_program p in
+      print_endline (Show.show ~whats p)
+(* match show with
+   Show.show
+   | `Terms -> print_endline (Show.show_terms p)
+   | `Types -> print_endline (Show.show_types p)
+   | `Both -> print_endline (Show.show_typed_program p)) *)

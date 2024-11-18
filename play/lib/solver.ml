@@ -20,10 +20,10 @@ type size_expr =
   | CVar of string
   | CAdd of size_expr * size_expr
   | CSub of size_expr * size_expr
-  | CTimes of size_expr * size_expr
+  | CTimes of size_expr * size_expr [@@deriving show]
 
-type restriction = size_expr * size_expr
-type restrictions = restriction list
+type restriction = size_expr * size_expr [@@deriving show]
+type restrictions = restriction list [@@deriving show]
 
 let rec uniq x =
   let rec uniq_help l n =
@@ -62,8 +62,10 @@ let rec expr_of_size (ctx : context) (s : size_expr) =
       let b = expr_of_size ctx b in
       Arithmetic.mk_mul ctx [ a; b ]
 
-let solve (ctx : context) (rs : restrictions) =
+let solve (rs : restrictions) =
   let open Core.List in
+  let cfg = [("model", "true"); ("proof", "false")] in
+	let ctx = (mk_context cfg) in
   let ns = List.map (Symbol.mk_string ctx) (names rs) in
   let types = repeat (List.length ns) (Integer.mk_sort ctx) in
   let r = rs
@@ -73,7 +75,7 @@ let solve (ctx : context) (rs : restrictions) =
   let x = Quantifier.mk_exists ctx types ns r (Some 1) [] [] (Some (Symbol.mk_string ctx "hello1")) (Some (Symbol.mk_string ctx "hello")) in
   let solver = (mk_solver ctx None) in
   (Printf.printf "c4: %s\n" (Expr.to_string r)) ;
-  check solver [r]
+  check solver [r] = SATISFIABLE
 
 
 let rs : restrictions = [

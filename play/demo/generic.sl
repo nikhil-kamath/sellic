@@ -1,6 +1,15 @@
-fun (m: M<5*5>) -> m * m;;
+fun (m1: <A*A>) (m2: <B*B>) -> m1 * m2;;
 
-fun (a: M<3*4>) (b: M<4*5>) -> a * b;;
+// does not type check
+fun (m1: <A*A>) (m2: <B*B>) -> m1 * m2 + [[1; 2]];;
 
-let f = fun (a: M<3*19>) (b: M<X*5>) (c: M<1*5>) -> a * (b + c);;
+fun (a: <3*4>) (b: <X*Y>) -> a * b;;
 
+(fun (a: <N*N>) -> a) [[1]];;
+(fun (a: <N*N>) -> a) [[1; 2]; [3; 4]];;
+
+// does not type check
+let f = fun (a: <N*N>) -> a * a in (f [[1]]) + (f [[1; 2]; [3; 4]]);;
+
+
+let f = fun (a: <A*B>) -> a in (f [[1; 2]]) * (f [[1]; [2]]);;

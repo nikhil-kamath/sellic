@@ -3,6 +3,7 @@ open Base
 open Matrix
 
 let ( = ) = Poly.( = )
+let ( >>| ) = List.( >>| )
 
 type typ =
   | TScalar
@@ -21,7 +22,7 @@ type op2 = Mult | Add | Sub | And | Or | Lt | Gt | Lte | Gte | Eq
 type term =
   | Matrix of { shape : dims; elements : nested } (* primitive matrices *)
   | Bool of bool
-  | Scalar of int
+  | Scalar of float
   | Var of string
   | App of term * term (* basic function application *)
   | Fold of
@@ -42,14 +43,3 @@ type toplevel = Toplevel of toplevel_def list [@@deriving show]
 type program = Program of toplevel * term list [@@deriving show]
 type typed_program = TypedProgram of (term * (typ, string) Core.Result.t) list
 
-let show_typed_program (TypedProgram tp) =
-  String.concat ~sep:"\n\n========\n\n"
-    (List.map tp ~f:(fun (t, ty) ->
-         show_term t ^ "\n"
-         ^
-         match ty with
-         | Error s -> ">> " ^ s
-         | Ok ty ->
-             ">> "
-             ^ String.substr_replace_all ~pattern:"\n" ~with_:"\n>> "
-                 (show_typ ty)))
