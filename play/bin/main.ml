@@ -36,6 +36,8 @@ let get_arg x =
   | "types" -> `Types
   | "inlined" -> `Inlined
   | "inlinedtypes" -> `InlinedTypes
+  | "annotated" -> `Annotated
+  | "mults" -> `Mults
   | _ -> `Terms
 
 let command =
@@ -45,7 +47,9 @@ let command =
       let%map_open filename = anon ("filename" %: sellic_file)
       and show =
         flag "-show" (listed string)
-          ~doc:" Pretty print the [terms | types | inlined]* of a program."
+          ~doc:
+            " Pretty print the [ terms | types | inlined | inlinedtypes | \
+             mults ]* of a program."
       in
       let whats = List.map ~f:get_arg show in
       fun () ->

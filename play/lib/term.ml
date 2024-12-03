@@ -33,6 +33,19 @@ type term =
   | Let of string * term * term
 [@@deriving show]
 
+type annotated =
+  | AMatrix of { shape : dims; elements : nested; typ : typ }
+  | ABool of bool
+  | AScalar of float
+  | AVar of string * typ
+  | AApp of annotated * annotated * typ
+  | AIf of annotated * annotated * annotated * typ
+  | AAbs of string * typ * annotated * typ
+  | AUOp of op1 * annotated * typ
+  | ABOp of op2 * annotated * annotated * typ
+  | ALet of string * annotated * annotated * typ
+[@@deriving show]
+
 (* toplevel mappings of name -> term *)
 (* SIMPLIFIED: unused *)
 (* type toplevel_def = Def of string * term [@@deriving show] *)
@@ -41,3 +54,5 @@ type term =
 type program = term list [@@deriving show]
 type typed_program = TypedProgram of (term * (typ, string) Core.Result.t) list
 
+type annotated_program =
+  | AnnotatedProgram of (annotated, string) Core.Result.t list

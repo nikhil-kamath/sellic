@@ -24,6 +24,8 @@ module Sparsity = struct
     |> Array.map ~f:count_nonzero_array
     |> Array.map ~f:float |> var
 
-  let predict { s = s1; rlv = rlv1 } { s = s2; _ } =
-    { s = Py.predict_sparsity s1 s2 rlv1; rlv = Py.predict_rlv s1 s2 rlv1 }
+  let predict { s = s1; rlv } { s = s2; _ } =
+    { s = Py.predict_sparsity s1 s2 rlv; rlv = Py.predict_rlv s1 s2 rlv }
+
+  let multiply { s = s1; rlv } { s = s2; _ } = Py.predict_mult s1 s2 rlv
 end

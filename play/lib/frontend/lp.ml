@@ -27,8 +27,11 @@ let show_parsed_file lexbuf =
   | Ok p -> Term.show_program p
   | Error e -> Error.to_string_mach e
 
-let display_compile ?(whats : [`Types | `Terms | `Inlined | `InlinedTypes] list = [ `Terms ])
-    lexbuf =
+let display_compile
+    ?(whats :
+        [ `Types | `Terms | `Inlined | `InlinedTypes | `Annotated | `Mults ]
+        list =
+      [ `Terms ]) lexbuf =
   match parse_program lexbuf with
   | Error e -> print_endline (Error.to_string_mach e)
   | Ok p ->
